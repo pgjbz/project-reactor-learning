@@ -97,7 +97,7 @@ class MonoTest {
     }
 
     @Test
-    void monoSubscriberConsumerSubscription(){
+    void monoSubscriberConsumerSubscriptionCancel(){
         String name = "Project Reactor";
 
         Mono<String> mono = Mono.just(name)
@@ -114,7 +114,26 @@ class MonoTest {
         StepVerifier.create(mono)
                 .expectNext("Project Reactor".toUpperCase())
                 .verifyComplete();
+    }
 
+    @Test
+    void monoSubscriberConsumerSubscription(){
+        String name = "Project Reactor";
+
+        Mono<String> mono = Mono.just(name)
+                .log()
+                .map(String::toUpperCase);
+
+        mono.subscribe(s -> log.info("Value: {}", s),
+                Throwable::printStackTrace,
+                () -> log.info("FINISHED!"),
+                subscription -> subscription.request(1));
+
+        log.info("----------------------------------");
+
+        StepVerifier.create(mono)
+                .expectNext("Project Reactor".toUpperCase())
+                .verifyComplete();
     }
 
 }
