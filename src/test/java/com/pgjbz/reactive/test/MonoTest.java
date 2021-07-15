@@ -158,4 +158,57 @@ class MonoTest {
 
     }
 
+    @Test
+    void monoDoOnError(){
+
+        Mono<Object> mono = Mono.error(new IllegalArgumentException("Error testing"))
+                .doOnError(e -> MonoTest.log.error("Error message {}", e.getMessage()))
+                .doOnNext(s -> log.info("Executing this doOnNext"))  //will not be executed
+                .log();
+
+        StepVerifier.create(mono)
+                .expectError(IllegalArgumentException.class)
+                .verify();
+
+    }
+
+    @Test
+    void monoDoOnErrorResume(){
+
+        String name = "Project Reactor";
+
+        Mono<Object> mono = Mono.error(new IllegalArgumentException("Error testing"))
+                .doOnError(e -> MonoTest.log.error("Error message {}", e.getMessage()))
+                .onErrorResume(s -> {
+                    log.info("Inside on error resume");
+                    return Mono.just(name);
+                })  //will not be executed
+                .log();
+
+        StepVerifier.create(mono)
+                .expectNext(name)
+                .verifyComplete();
+
+    }
+
+    @Test
+    void monoDoOnErrorReturn(){
+
+        String name = "Project Reactor";
+
+        Mono<Object> mono = Mono.error(new IllegalArgumentException("Error testing"))
+                .doOnError(e -> MonoTest.log.error("Error message {}", e.getMessage()))
+                .onErrorReturn("EMPTY")
+                .onErrorResume(s -> { //will not be executed
+                    log.info("Inside on error resume");
+                    return Mono.just(name);
+                })  //will not be executed
+                .log();
+
+        StepVerifier.create(mono)
+                .expectNext("EMPTY")
+                .verifyComplete();
+
+    }
+
 }
