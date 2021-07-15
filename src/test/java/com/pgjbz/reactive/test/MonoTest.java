@@ -40,4 +40,39 @@ class MonoTest {
 
     }
 
+    @Test
+    void monoSubscriberConsumer(){
+        String name = "Project Reactor";
+
+        Mono<String> mono = Mono.just(name)
+                .log();
+
+        mono.subscribe(s -> log.info("Value: {}", s));
+
+        log.info("----------------------------------");
+
+        StepVerifier.create(mono)
+                .expectNext("Project Reactor")
+                .verifyComplete();
+
+    }
+
+    @Test
+    void monoSubscriberConsumerError(){
+        String name = "Project Reactor";
+
+        Mono<String> mono = Mono.just(name)
+                .map(s -> { throw new RuntimeException("Testing mono with error");});
+
+        mono.subscribe(s -> log.info("Value: {}", s), s -> log.error("Error: {}", s.getMessage()));
+        mono.subscribe(s -> log.info("Value: {}", s), Throwable::printStackTrace);
+
+        log.info("----------------------------------");
+
+        StepVerifier.create(mono)
+                .expectError(RuntimeException.class)
+                .verify();
+
+    }
+
 }
