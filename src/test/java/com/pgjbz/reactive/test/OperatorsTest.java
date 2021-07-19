@@ -203,6 +203,51 @@ class OperatorsTest {
 
     }
 
+    @Test
+    void concatOperator() {
+        Flux<String> flux1 = Flux.just("a", "b");
+        Flux<String> flux2 = Flux.just("c", "d");
+
+        Flux<String> concat = Flux.concat(flux1, flux2).log();
+
+        StepVerifier.create(concat)
+                .expectSubscription()
+                .expectNext("a", "b", "c", "d")
+                .expectComplete()
+                .verify();
+
+    }
+
+    @Test
+    void concatWithOperator() {
+        Flux<String> flux1 = Flux.just("a", "b");
+        Flux<String> flux2 = Flux.just("c", "d");
+
+        Flux<String> concatWith = flux1.concatWith(flux2).log();
+
+        StepVerifier.create(concatWith)
+                .expectSubscription()
+                .expectNext("a", "b", "c", "d")
+                .expectComplete()
+                .verify();
+    }
+
+    @Test
+    void concatLatestOperator() {
+        Flux<String> flux1 = Flux.just("a", "b");
+        Flux<String> flux2 = Flux.just("c", "d");
+
+        Flux<String> combineLatest = Flux.combineLatest(flux1, flux2, (s1, s2) -> s1.toUpperCase() + s2.toUpperCase())
+                .log();
+
+
+        StepVerifier.create(combineLatest)
+                .expectSubscription()
+                .expectNext("BC", "BD")
+                .expectComplete()
+                .verify();
+    }
+
     private Flux<Object> emptyFlux() {
         return Flux.empty();
     }
