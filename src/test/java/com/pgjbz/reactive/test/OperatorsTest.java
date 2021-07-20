@@ -295,7 +295,7 @@ class OperatorsTest {
         }).doOnError(t -> log.error("We could do something with this"));
         Flux<String> flux2 = Flux.just("c", "d");
 
-        Flux<String> mergeWith = Flux.mergeDelayError(1, flux1, flux2, flux1)
+        Flux<String> mergeWith = Flux.mergeDelayError(2, flux1, flux2, flux1)
                 .log();
 
         StepVerifier.create(mergeWith)
@@ -348,6 +348,43 @@ class OperatorsTest {
                 .expectComplete()
                 .verify();
     }
+
+    @Test
+    void flatMapOperator() throws Exception {
+        Flux<String> flux1 = Flux.just("a", "b");
+
+        Flux<String> flux = flux1.map(String::toUpperCase)
+                .flatMap(this::findByName)
+                .log();
+
+        StepVerifier.create(flux)
+                .expectSubscription()
+                .expectNext( "nameB1", "nameB2", "nameA1", "nameA2")
+                .expectComplete()
+                .verify();
+    }
+
+    @Test
+    void flatMapSequentialOperator() throws Exception {
+        Flux<String> flux1 = Flux.just("a", "b");
+
+        Flux<String> flux = flux1.map(String::toUpperCase)
+                .flatMapSequential(this::findByName)
+                .log();
+
+        StepVerifier.create(flux)
+                .expectSubscription()
+                .expectNext( "nameA1", "nameA2","nameB1", "nameB2")
+                .expectComplete()
+                .verify();
+    }
+
+    private Flux<String> findByName(String name) {
+        return name.equalsIgnoreCase("A") ?
+                Flux.just("nameA1", "nameA2").delayElements(Duration.ofMillis(100))
+                : Flux.just("nameB1", "nameB2");
+    }
+
 
 
     private Flux<Object> emptyFlux() {
