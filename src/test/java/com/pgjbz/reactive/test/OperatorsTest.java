@@ -379,6 +379,25 @@ class OperatorsTest {
                 .verify();
     }
 
+    @Test
+    void flatMapOperatorError() throws Exception {
+        Flux<String> flux1 = Flux.just("a", "b").map(s -> {
+            if(s.equalsIgnoreCase("b"))
+                throw new IllegalArgumentException();
+            return s;
+        });
+
+        Flux<String> flux = flux1.map(String::toUpperCase)
+                .flatMapDelayError(this::findByName, 1,1)
+                .log();
+
+        StepVerifier.create(flux)
+                .expectSubscription()
+                .expectNext( "nameA1", "nameA2")
+                .expectError()
+                .verify();
+    }
+
     private Flux<String> findByName(String name) {
         return name.equalsIgnoreCase("A") ?
                 Flux.just("nameA1", "nameA2").delayElements(Duration.ofMillis(100))
