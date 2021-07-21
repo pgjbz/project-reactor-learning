@@ -1,5 +1,9 @@
 package com.pgjbz.reactive.test;
 
+import lombok.AllArgsConstructor;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -408,5 +412,54 @@ class OperatorsTest {
 
     private Flux<Object> emptyFlux() {
         return Flux.empty();
+    }
+
+
+    @Test
+    void zipOperator() {
+        Flux<String> titleFlux = Flux.just("Grand Blue", "One Punch Man");
+        Flux<String> studioFlux = Flux.just("Studio 1", "Studio 2");
+        Flux<Integer> episodesFlux = Flux.just(12,24);
+
+        Flux<Anime> animeFlux = Flux.zip(titleFlux, studioFlux, episodesFlux)
+                .flatMap(tuple -> Flux.just(new Anime(tuple.getT1(), tuple.getT2(), tuple.getT3())));
+
+        animeFlux.subscribe(anime -> log.info(anime.toString()));
+
+        StepVerifier.create(animeFlux)
+                .expectSubscription()
+                .expectNext(new Anime("Grand Blue", "Studio 1", 12),
+                        new Anime("One Punch Man", "Studio 2", 24))
+                .expectComplete()
+                .verify();
+    }
+
+    @Test
+    void zipWithOperator() {
+        Flux<String> titleFlux = Flux.just("Grand Blue", "One Punch Man");
+        Flux<String> studioFlux = Flux.just("Studio 1", "Studio 2");
+        Flux<Integer> episodesFlux = Flux.just(12,24);
+
+        Flux<Anime> animeFlux = titleFlux.zipWith(episodesFlux) //suport only 1 flux
+                .flatMap(tuple -> Flux.just(new Anime(tuple.getT1(), null, tuple.getT2())));
+
+        animeFlux.subscribe(anime -> log.info(anime.toString()));
+
+        StepVerifier.create(animeFlux)
+                .expectSubscription()
+                .expectNext(new Anime("Grand Blue", null, 12),
+                        new Anime("One Punch Man", null, 24))
+                .expectComplete()
+                .verify();
+    }
+
+    @Getter
+    @ToString
+    @EqualsAndHashCode
+    @AllArgsConstructor
+    class Anime {
+        private String title;
+        private String studio;
+        private int episodes;
     }
 }
